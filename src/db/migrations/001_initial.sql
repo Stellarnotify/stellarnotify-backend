@@ -1,0 +1,1 @@
+-- C01 stub — migration implemented in C06
