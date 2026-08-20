@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_owner_contract_channel
+  ON subscriptions (owner, contract_id, channel);
+
 CREATE INDEX IF NOT EXISTS idx_subscriptions_contract_id
   ON subscriptions (contract_id)
   WHERE active = TRUE;
