@@ -1,6 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import { logger } from '../logger';
 import healthRouter from './routes/health';
+import subscriptionsRouter from './routes/subscriptions';
 
 /**
  * Creates and configures the Express application instance.
@@ -14,6 +15,7 @@ export function createApp(): Application {
 
   // Routes
   app.use('/health', healthRouter);
+  app.use('/api/subscriptions', subscriptionsRouter);
 
   // 404 handler — must be registered after all routes
   app.use((_req: Request, res: Response) => {
