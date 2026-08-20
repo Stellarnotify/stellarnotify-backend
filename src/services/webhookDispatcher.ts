@@ -3,7 +3,7 @@ import { NotificationRecord, Subscription, WebhookPayload } from '../types';
 import { markDelivered, markFailed, markRetrying } from '../db/notificationRepo';
 import { deliverWebhook } from './webhookClient';
 
-const MAX_RETRIES = parseInt(process.env.WEBHOOK_MAX_RETRIES ?? '5', 10);
+export const MAX_RETRIES = parseInt(process.env.WEBHOOK_MAX_RETRIES ?? '5', 10);
 
 /**
  * Builds the webhook payload from a notification record and its subscription.
@@ -27,8 +27,9 @@ function buildPayload(
 /**
  * Calculates the next retry delay using exponential back-off.
  * Attempt 1 → 30 s, 2 → 60 s, 3 → 120 s, 4 → 240 s, 5 → 480 s.
+ * Capped at 1 hour.
  */
-function nextRetryDelay(attempt: number): number {
+export function nextRetryDelay(attempt: number): number {
   return Math.min(30_000 * Math.pow(2, attempt - 1), 3_600_000);
 }
 
