@@ -1,0 +1,37 @@
+{
+  "name": "stellarnotify-backend",
+  "version": "0.1.0",
+  "description": "On-chain event notification and webhook infrastructure for Soroban smart contracts",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "lint": "eslint src --ext .ts",
+    "test": "jest --runInBand"
+  },
+  "keywords": ["stellar", "soroban", "webhooks", "notifications", "blockchain"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "1.7.2",
+    "express": "4.19.2",
+    "ioredis": "5.4.1",
+    "pg": "8.12.0",
+    "winston": "3.13.0",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "4.17.21",
+    "@types/jest": "29.5.12",
+    "@types/node": "20.14.9",
+    "@types/pg": "8.11.6",
+    "@typescript-eslint/eslint-plugin": "7.15.0",
+    "@typescript-eslint/parser": "7.15.0",
+    "eslint": "8.57.0",
+    "jest": "29.7.0",
+    "ts-jest": "29.2.2",
+    "ts-node-dev": "2.0.0",
+    "typescript": "5.5.3"
+  }
+}
