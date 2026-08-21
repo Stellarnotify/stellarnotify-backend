@@ -1,9 +1,10 @@
-import express, { Application, Request, Response, NextFunction } from 'express';
-import { logger } from '../logger';
+import express, { Application } from 'express';
 import healthRouter from './routes/health';
 import subscriptionsRouter from './routes/subscriptions';
 import notificationsRouter from './routes/notifications';
 import sseRouter from './routes/sse';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { requestLogger } from './middleware/requestLogger';
 
 /**
  * Creates and configures the Express application instance.
@@ -15,6 +16,9 @@ export function createApp(): Application {
   // Parse JSON request bodies
   app.use(express.json());
 
+  // Request logging
+  app.use(requestLogger);
+
   // Routes
   app.use('/health', healthRouter);
   app.use('/api/subscriptions', subscriptionsRouter);
@@ -22,16 +26,10 @@ export function createApp(): Application {
   app.use('/sse', sseRouter);
 
   // 404 handler — must be registered after all routes
-  app.use((_req: Request, res: Response) => {
-    res.status(404).json({ error: 'Not found' });
-  });
+  app.use(notFoundHandler);
 
-  // Global error handler — must be last and have 4 parameters
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-    logger.error('Unhandled error', { error: err.message, stack: err.stack });
-    res.status(500).json({ error: 'Internal server error' });
-  });
+  // Global error handler — must be last
+  app.use(errorHandler);
 
   return app;
 }
