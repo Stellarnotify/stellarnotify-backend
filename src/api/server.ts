@@ -3,6 +3,7 @@ import { logger } from '../logger';
 import healthRouter from './routes/health';
 import subscriptionsRouter from './routes/subscriptions';
 import notificationsRouter from './routes/notifications';
+import sseRouter from './routes/sse';
 
 /**
  * Creates and configures the Express application instance.
@@ -18,6 +19,7 @@ export function createApp(): Application {
   app.use('/health', healthRouter);
   app.use('/api/subscriptions', subscriptionsRouter);
   app.use('/api/notifications', notificationsRouter);
+  app.use('/sse', sseRouter);
 
   // 404 handler — must be registered after all routes
   app.use((_req: Request, res: Response) => {
