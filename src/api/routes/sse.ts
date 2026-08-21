@@ -57,9 +57,14 @@ router.get('/:subscriptionId', (req: Request, res: Response) => {
   // Cleanup on client disconnect
   req.on('close', () => {
     clearInterval(keepAlive);
-    subscriber.unsubscribe(channel).finally(() => {
-      subscriber.quit().catch(() => undefined);
-    });
+    subscriber
+      .unsubscribe(channel)
+      .catch((err: Error) =>
+        logger.warn('SSE unsubscribe error', { subscriptionId, error: err.message }),
+      )
+      .finally(() => {
+        subscriber.quit().catch(() => undefined);
+      });
     logger.info('SSE client disconnected', { subscriptionId });
   });
 });
