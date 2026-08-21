@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
+import { z } from 'zod';
 import { getPool } from '../../db/client';
 import {
   upsertSubscription,
@@ -12,32 +13,29 @@ import { requireApiKey } from '../middleware/auth';
 
 const router = Router();
 
+const endpointSchema = z.object({
+  url: z
+    .string({ required_error: 'url is required' })
+    .url('url must be a valid URL')
+    .refine(
+      (u) => u.startsWith('http://') || u.startsWith('https://'),
+      'url must use http or https',
+    ),
+});
+
 /**
  * POST /api/subscriptions/endpoints
  * Registers a webhook URL and stores a SHA-256 hash → URL mapping.
  * Returns the endpoint hash for use when creating subscriptions.
  */
 router.post('/endpoints', requireApiKey, async (req: Request, res: Response) => {
-  const { url } = req.body as { url?: unknown };
-
-  if (!url || typeof url !== 'string') {
-    res.status(400).json({ error: 'url is required and must be a string' });
+  const result = endpointSchema.safeParse(req.body);
+  if (!result.success) {
+    res.status(400).json({ error: result.error.flatten().fieldErrors });
     return;
   }
 
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    res.status(400).json({ error: 'url must be a valid URL' });
-    return;
-  }
-
-  if (!['http:', 'https:'].includes(parsed.protocol)) {
-    res.status(400).json({ error: 'url must use http or https' });
-    return;
-  }
-
+  const { url } = result.data;
   const hash = crypto.createHash('sha256').update(url).digest('hex');
 
   await getPool().query(
