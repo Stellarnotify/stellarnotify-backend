@@ -38,7 +38,8 @@ export function nextRetryDelay(attempt: number): number {
  * On failure it schedules a retry (up to MAX_RETRIES), then marks permanent failure.
  *
  * @param notification - The notification record to dispatch.
- * @param subscription - The owning subscription (provides endpoint URL).
+ * @param subscription - The owning subscription (provides endpoint URL and metadata).
+ * @returns Resolves when delivery or scheduling is complete — never throws.
  */
 export async function dispatchWebhook(
   notification: NotificationRecord,

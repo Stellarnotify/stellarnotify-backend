@@ -16,6 +16,7 @@ export function inAppChannel(subscriptionId: string): string {
  * SSE route handlers subscribe to this channel per connected client.
  *
  * @param notification - The notification record to broadcast.
+ * @throws If the Redis publish call fails.
  */
 export async function broadcastInApp(
   notification: NotificationRecord,

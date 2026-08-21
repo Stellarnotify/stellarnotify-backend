@@ -14,6 +14,7 @@ import { markDelivered, markFailed } from '../db/notificationRepo';
  * which are wired up outside this service.
  *
  * @param notification - The notification record to prove on-chain.
+ * @returns Resolves when the transaction is submitted or marked failed — never throws.
  */
 export async function reEmitOnChain(
   notification: NotificationRecord,

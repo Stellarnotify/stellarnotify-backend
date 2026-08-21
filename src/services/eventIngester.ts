@@ -27,10 +27,11 @@ interface RpcResponse {
  * Fetches Soroban contract events from the Stellar RPC node for a given
  * ledger range, optionally scoped to specific contract IDs.
  *
- * @param rpcUrl      - Stellar RPC endpoint URL
- * @param startLedger - First ledger to fetch events from (inclusive)
- * @param contractIds - Optional list of contract IDs to filter by
- * @returns Parsed SorobanEvent array and the latest ledger seen by the node
+ * @param rpcUrl      - Stellar RPC endpoint URL (e.g. https://soroban-testnet.stellar.org)
+ * @param startLedger - First ledger sequence number to fetch events from (inclusive)
+ * @param contractIds - Optional list of contract IDs to filter; omit to fetch all contracts
+ * @returns Parsed SorobanEvent array and the latest ledger seen by the RPC node
+ * @throws  On network failure or non-zero RPC error code
  */
 export async function fetchEvents(
   rpcUrl: string,
