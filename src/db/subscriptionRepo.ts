@@ -67,6 +67,7 @@ export async function deactivateSubscription(
 
 /**
  * Returns all active, non-expired subscriptions watching a given contract.
+ * Subscriptions with a past expires_at are excluded at the database level.
  */
 export async function getActiveByContract(
   contractId: string,
