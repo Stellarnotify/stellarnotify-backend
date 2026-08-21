@@ -1,7 +1,25 @@
+# Dependencies
 node_modules/
+
+# Compiled output
 dist/
+
+# Environment files
 .env
-*.env.local
+.env.local
+.env.*.local
+
+# Logs
 *.log
+logs/
+
+# Test coverage
 coverage/
+
+# OS artifacts
 .DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
