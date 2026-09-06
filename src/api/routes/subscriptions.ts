@@ -23,6 +23,42 @@ const endpointSchema = z.object({
     ),
 });
 
+const createSubscriptionSchema = z.object({
+  owner: z
+    .string({ required_error: 'owner is required' })
+    .min(1, 'owner must not be empty'),
+  contractId: z
+    .string({ required_error: 'contractId is required' })
+    .min(1, 'contractId must not be empty'),
+  topicFilters: z
+    .array(z.string())
+    .default([]),
+  channel: z
+    .enum(['Webhook', 'InApp', 'OnChain'], {
+      required_error: 'channel is required',
+      invalid_type_error: 'channel must be Webhook, InApp, or OnChain',
+    }),
+  endpointHash: z
+    .string()
+    .optional(),
+  expiresAt: z
+    .string()
+    .datetime()
+    .optional(),
+}).refine(
+  (data) => {
+    // If channel is Webhook, endpointHash is required
+    if (data.channel === 'Webhook' && !data.endpointHash) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'endpointHash is required when channel is Webhook',
+    path: ['endpointHash'],
+  },
+);
+
 /**
  * POST /api/subscriptions/endpoints
  * Registers a webhook URL and stores a SHA-256 hash → URL mapping.
