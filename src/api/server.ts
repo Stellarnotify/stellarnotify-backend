@@ -5,6 +5,7 @@ import notificationsRouter from './routes/notifications';
 import sseRouter from './routes/sse';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
+import { apiRateLimiter } from './middleware/rateLimiter';
 
 /**
  * Creates and configures the Express application instance.
@@ -18,6 +19,9 @@ export function createApp(): Application {
 
   // Request logging
   app.use(requestLogger);
+
+  // Rate limiting (applied globally, skips /health internally)
+  app.use(apiRateLimiter);
 
   // Routes
   app.use('/health', healthRouter);
