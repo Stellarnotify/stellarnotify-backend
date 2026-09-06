@@ -15,6 +15,9 @@ const envSchema = z.object({
 
   WEBHOOK_TIMEOUT_MS: z.string().default('5000').transform(Number),
   WEBHOOK_MAX_RETRIES: z.string().default('5').transform(Number),
+
+  RATE_LIMIT_WINDOW_MS: z.string().default('60000').transform(Number),
+  RATE_LIMIT_MAX_REQUESTS: z.string().default('100').transform(Number),
 });
 
 const parsed = envSchema.safeParse(process.env);
