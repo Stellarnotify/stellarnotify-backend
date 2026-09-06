@@ -85,6 +85,32 @@ router.post('/endpoints', requireApiKey, async (req: Request, res: Response) => 
 });
 
 /**
+ * POST /api/subscriptions
+ * Creates a new subscription for a wallet owner to watch a contract.
+ * Accepts owner, contractId, topicFilters, channel, and optional endpointHash.
+ */
+router.post('/', requireApiKey, async (req: Request, res: Response) => {
+  const result = createSubscriptionSchema.safeParse(req.body);
+  if (!result.success) {
+    res.status(400).json({ error: result.error.flatten().fieldErrors });
+    return;
+  }
+
+  const { owner, contractId, topicFilters, channel, endpointHash, expiresAt } = result.data;
+
+  const subscription = await upsertSubscription({
+    owner,
+    contractId,
+    topicFilters,
+    channel,
+    endpointHash,
+    expiresAt,
+  });
+
+  res.status(201).json({ subscription });
+});
+
+/**
  * GET /api/subscriptions/by-owner/:owner
  * Returns all subscriptions belonging to a wallet address.
  */
