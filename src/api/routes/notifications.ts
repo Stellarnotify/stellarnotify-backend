@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import {
   getBySubscription,
+  countBySubscription,
   getFailed,
   getNotificationById,
 } from '../../db/notificationRepo';
@@ -18,8 +19,22 @@ router.get('/by-subscription/:id', requireApiKey, async (req: Request, res: Resp
   const limit = Math.min(parseInt((req.query.limit as string) ?? '50', 10), 200);
   const offset = parseInt((req.query.offset as string) ?? '0', 10);
 
-  const notifications = await getBySubscription(id, limit, offset);
-  res.status(200).json({ notifications, limit, offset });
+  const [notifications, total] = await Promise.all([
+    getBySubscription(id, limit, offset),
+    countBySubscription(id),
+  ]);
+
+  const hasMore = offset + notifications.length < total;
+
+  res.status(200).json({
+    notifications,
+    pagination: {
+      limit,
+      offset,
+      total,
+      hasMore,
+    },
+  });
 });
 
 /**
