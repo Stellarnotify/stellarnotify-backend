@@ -126,6 +126,21 @@ export async function getBySubscription(
 }
 
 /**
+ * Returns the total count of notifications for a given subscription.
+ */
+export async function countBySubscription(
+  subscriptionId: string,
+  db: Pool = getPool(),
+): Promise<number> {
+  const { rows } = await db.query(
+    `SELECT COUNT(*) as count FROM notifications
+     WHERE subscription_id = $1`,
+    [subscriptionId],
+  );
+  return parseInt(rows[0].count as string, 10);
+}
+
+/**
  * Returns all permanently failed notifications, most recent first.
  */
 export async function getFailed(
