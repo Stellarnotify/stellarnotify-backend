@@ -10,13 +10,20 @@
     "lint": "eslint src --ext .ts",
     "test": "jest --runInBand"
   },
-  "keywords": ["stellar", "soroban", "webhooks", "notifications", "blockchain"],
+  "keywords": [
+    "stellar",
+    "soroban",
+    "webhooks",
+    "notifications",
+    "blockchain"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "axios": "1.19.0",
     "dotenv": "16.4.5",
     "express": "4.22.2",
+    "express-rate-limit": "^7.4.0",
     "ioredis": "5.4.1",
     "pg": "8.12.0",
     "winston": "3.13.0",

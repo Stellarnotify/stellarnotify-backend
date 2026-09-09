@@ -23,6 +23,42 @@ const endpointSchema = z.object({
     ),
 });
 
+const createSubscriptionSchema = z.object({
+  owner: z
+    .string({ required_error: 'owner is required' })
+    .min(1, 'owner must not be empty'),
+  contractId: z
+    .string({ required_error: 'contractId is required' })
+    .min(1, 'contractId must not be empty'),
+  topicFilters: z
+    .array(z.string())
+    .default([]),
+  channel: z
+    .enum(['Webhook', 'InApp', 'OnChain'], {
+      required_error: 'channel is required',
+      invalid_type_error: 'channel must be Webhook, InApp, or OnChain',
+    }),
+  endpointHash: z
+    .string()
+    .optional(),
+  expiresAt: z
+    .string()
+    .datetime()
+    .optional(),
+}).refine(
+  (data) => {
+    // If channel is Webhook, endpointHash is required
+    if (data.channel === 'Webhook' && !data.endpointHash) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'endpointHash is required when channel is Webhook',
+    path: ['endpointHash'],
+  },
+);
+
 /**
  * POST /api/subscriptions/endpoints
  * Registers a webhook URL and stores a SHA-256 hash → URL mapping.
@@ -46,6 +82,32 @@ router.post('/endpoints', requireApiKey, async (req: Request, res: Response) => 
   );
 
   res.status(201).json({ hash, url });
+});
+
+/**
+ * POST /api/subscriptions
+ * Creates a new subscription for a wallet owner to watch a contract.
+ * Accepts owner, contractId, topicFilters, channel, and optional endpointHash.
+ */
+router.post('/', requireApiKey, async (req: Request, res: Response) => {
+  const result = createSubscriptionSchema.safeParse(req.body);
+  if (!result.success) {
+    res.status(400).json({ error: result.error.flatten().fieldErrors });
+    return;
+  }
+
+  const { owner, contractId, topicFilters, channel, endpointHash, expiresAt } = result.data;
+
+  const subscription = await upsertSubscription({
+    owner,
+    contractId,
+    topicFilters,
+    channel,
+    endpointHash,
+    expiresAt,
+  });
+
+  res.status(201).json({ subscription });
 });
 
 /**

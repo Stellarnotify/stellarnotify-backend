@@ -35,6 +35,20 @@ export async function publish(channel: string, message: string): Promise<void> {
 }
 
 /**
+ * Checks Redis connectivity by sending a PING command.
+ * Returns true if Redis responds with PONG, false otherwise.
+ */
+export async function checkRedisHealth(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const response = await getPublisher().ping();
+    return { ok: response === 'PONG' };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: message };
+  }
+}
+
+/**
  * Closes the publisher connection gracefully.
  */
 export async function closePublisher(): Promise<void> {
