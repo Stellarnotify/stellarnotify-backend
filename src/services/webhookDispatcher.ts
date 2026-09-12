@@ -1,9 +1,19 @@
+import crypto from 'crypto';
 import { logger } from '../logger';
 import { NotificationRecord, Subscription, WebhookPayload } from '../types';
 import { markDelivered, markFailed, markRetrying } from '../db/notificationRepo';
 import { deliverWebhook } from './webhookClient';
 
 export const MAX_RETRIES = parseInt(process.env.WEBHOOK_MAX_RETRIES ?? '5', 10);
+
+/**
+ * Computes HMAC-SHA256 signature of the webhook payload using the subscription's secret.
+ * Returns hex-encoded signature string.
+ */
+export function computeSignature(payload: WebhookPayload, secret: string): string {
+  const payloadString = JSON.stringify(payload);
+  return crypto.createHmac('sha256', secret).update(payloadString).digest('hex');
+}
 
 /**
  * Builds the webhook payload from a notification record and its subscription.
@@ -56,13 +66,19 @@ export async function dispatchWebhook(
   const payload = buildPayload(notification, subscription);
   const attempt = notification.attempts + 1;
 
+  // Compute HMAC signature if subscription has a webhook secret
+  const signature = subscription.webhookSecret
+    ? computeSignature(payload, subscription.webhookSecret)
+    : undefined;
+
   try {
-    await deliverWebhook(subscription.endpointUrl, payload);
+    await deliverWebhook(subscription.endpointUrl, payload, signature);
     await markDelivered(notification.id);
     logger.info('Webhook delivered', {
       notificationId: notification.id,
       attempt,
       url: subscription.endpointUrl,
+      signed: !!signature,
     });
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
