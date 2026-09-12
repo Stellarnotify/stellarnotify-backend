@@ -2,6 +2,7 @@ import { Server } from 'http';
 import { logger } from './logger';
 import { closeDb } from './db/client';
 import { closePublisher } from './services/redisClient';
+import { stopExpiryCleanupJob } from './services/expiryCleanup';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -10,8 +11,12 @@ const SHUTDOWN_TIMEOUT_MS = 10_000;
  * close the DB pool, and disconnect Redis before the process exits.
  *
  * @param server - The running HTTP server instance to close.
+ * @param cleanupInterval - Optional cleanup job interval to stop.
  */
-export function registerShutdownHandlers(server: Server): void {
+export function registerShutdownHandlers(
+  server: Server,
+  cleanupInterval?: NodeJS.Timeout,
+): void {
   const shutdown = async (signal: string) => {
     logger.info(`Received ${signal} — starting graceful shutdown`);
 
@@ -24,6 +29,11 @@ export function registerShutdownHandlers(server: Server): void {
     timer.unref();
 
     try {
+      // Stop cleanup job if running
+      if (cleanupInterval) {
+        stopExpiryCleanupJob(cleanupInterval);
+      }
+
       // Stop accepting new connections
       await new Promise<void>((resolve, reject) => {
         server.close((err) => (err ? reject(err) : resolve()));

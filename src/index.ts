@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { createApp } from './api/server';
 import { connectDb } from './db/client';
 import { getPublisher } from './services/redisClient';
+import { startExpiryCleanupJob } from './services/expiryCleanup';
 import { registerShutdownHandlers } from './shutdown';
 import { logger } from './logger';
 import { config } from './config';
@@ -13,6 +14,9 @@ async function main(): Promise<void> {
   // Initialise Redis publisher (eagerly connect so errors surface at startup)
   getPublisher();
 
+  // Start periodic expiry cleanup job
+  const cleanupInterval = startExpiryCleanupJob();
+
   const app = createApp();
 
   const server = app.listen(config.PORT, () => {
@@ -22,7 +26,7 @@ async function main(): Promise<void> {
     });
   });
 
-  registerShutdownHandlers(server);
+  registerShutdownHandlers(server, cleanupInterval);
 }
 
 main().catch((err) => {
