@@ -11,6 +11,7 @@ function rowToSubscription(row: Record<string, unknown>): Subscription {
     topicFilters: (row.topic_filters as string[]) ?? [],
     channel: row.channel as NotificationChannel,
     endpointHash: (row.endpoint_hash as string) ?? undefined,
+    webhookSecret: (row.webhook_secret as string) ?? undefined,
     active: row.active as boolean,
     expiresAt: row.expires_at ? (row.expires_at as Date).toISOString() : undefined,
     createdAt: (row.created_at as Date).toISOString(),
@@ -23,20 +24,21 @@ function rowToSubscription(row: Record<string, unknown>): Subscription {
  * contractId + channel). Returns the upserted subscription.
  */
 export async function upsertSubscription(
-  data: Pick<Subscription, 'owner' | 'contractId' | 'topicFilters' | 'channel' | 'endpointHash' | 'expiresAt'>,
+  data: Pick<Subscription, 'owner' | 'contractId' | 'topicFilters' | 'channel' | 'endpointHash' | 'webhookSecret' | 'expiresAt'>,
   db: Pool = getPool(),
 ): Promise<Subscription> {
   const { rows } = await db.query(
     `INSERT INTO subscriptions
-       (owner, contract_id, topic_filters, channel, endpoint_hash, expires_at)
-     VALUES ($1, $2, $3, $4, $5, $6)
+       (owner, contract_id, topic_filters, channel, endpoint_hash, webhook_secret, expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (owner, contract_id, channel)
      DO UPDATE SET
-       topic_filters = EXCLUDED.topic_filters,
-       endpoint_hash = EXCLUDED.endpoint_hash,
-       expires_at    = EXCLUDED.expires_at,
-       active        = TRUE,
-       updated_at    = NOW()
+       topic_filters  = EXCLUDED.topic_filters,
+       endpoint_hash  = EXCLUDED.endpoint_hash,
+       webhook_secret = EXCLUDED.webhook_secret,
+       expires_at     = EXCLUDED.expires_at,
+       active         = TRUE,
+       updated_at     = NOW()
      RETURNING *`,
     [
       data.owner,
@@ -44,6 +46,7 @@ export async function upsertSubscription(
       data.topicFilters,
       data.channel,
       data.endpointHash ?? null,
+      data.webhookSecret ?? null,
       data.expiresAt ?? null,
     ],
   );
@@ -86,15 +89,27 @@ export async function getActiveByContract(
 
 /**
  * Returns all subscriptions (active or inactive) belonging to a wallet owner.
+ * Optionally filters by active status.
+ * 
+ * @param owner - Wallet address of the subscriber.
+ * @param activeFilter - Optional boolean to filter by active status (true = active only, false = inactive only, undefined = all).
  */
 export async function getByOwner(
   owner: string,
+  activeFilter?: boolean,
   db: Pool = getPool(),
 ): Promise<Subscription[]> {
-  const { rows } = await db.query(
-    `SELECT * FROM subscriptions WHERE owner = $1 ORDER BY created_at DESC`,
-    [owner],
-  );
+  let query = `SELECT * FROM subscriptions WHERE owner = $1`;
+  const params: (string | boolean)[] = [owner];
+
+  if (activeFilter !== undefined) {
+    query += ` AND active = $2`;
+    params.push(activeFilter);
+  }
+
+  query += ` ORDER BY created_at DESC`;
+
+  const { rows } = await db.query(query, params);
   return rows.map(rowToSubscription);
 }
 

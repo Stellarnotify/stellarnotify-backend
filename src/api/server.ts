@@ -3,6 +3,7 @@ import healthRouter from './routes/health';
 import subscriptionsRouter from './routes/subscriptions';
 import notificationsRouter from './routes/notifications';
 import sseRouter from './routes/sse';
+import metricsRouter from './routes/metrics';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { apiRateLimiter } from './middleware/rateLimiter';
@@ -25,6 +26,7 @@ export function createApp(): Application {
 
   // Routes
   app.use('/health', healthRouter);
+  app.use('/metrics', metricsRouter);
   app.use('/api/subscriptions', subscriptionsRouter);
   app.use('/api/notifications', notificationsRouter);
   app.use('/sse', sseRouter);

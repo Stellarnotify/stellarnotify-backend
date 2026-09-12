@@ -41,6 +41,9 @@ const createSubscriptionSchema = z.object({
   endpointHash: z
     .string()
     .optional(),
+  webhookSecret: z
+    .string()
+    .optional(),
   expiresAt: z
     .string()
     .datetime()
@@ -96,7 +99,7 @@ router.post('/', requireApiKey, async (req: Request, res: Response) => {
     return;
   }
 
-  const { owner, contractId, topicFilters, channel, endpointHash, expiresAt } = result.data;
+  const { owner, contractId, topicFilters, channel, endpointHash, webhookSecret, expiresAt } = result.data;
 
   const subscription = await upsertSubscription({
     owner,
@@ -104,6 +107,7 @@ router.post('/', requireApiKey, async (req: Request, res: Response) => {
     topicFilters,
     channel,
     endpointHash,
+    webhookSecret,
     expiresAt,
   });
 
@@ -113,10 +117,28 @@ router.post('/', requireApiKey, async (req: Request, res: Response) => {
 /**
  * GET /api/subscriptions/by-owner/:owner
  * Returns all subscriptions belonging to a wallet address.
+ * Accepts optional ?active=true or ?active=false query parameter to filter by status.
  */
 router.get('/by-owner/:owner', requireApiKey, async (req: Request, res: Response) => {
   const { owner } = req.params;
-  const subscriptions = await getByOwner(owner);
+  const activeParam = req.query.active as string | undefined;
+
+  // Parse active query parameter
+  let activeFilter: boolean | undefined;
+  if (activeParam !== undefined) {
+    if (activeParam === 'true') {
+      activeFilter = true;
+    } else if (activeParam === 'false') {
+      activeFilter = false;
+    } else {
+      res.status(400).json({
+        error: 'Invalid active parameter — must be "true" or "false"',
+      });
+      return;
+    }
+  }
+
+  const subscriptions = await getByOwner(owner, activeFilter);
   res.status(200).json({ subscriptions });
 });
 
