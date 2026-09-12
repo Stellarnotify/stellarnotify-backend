@@ -22,6 +22,8 @@ export interface Subscription {
   endpointUrl?: string;
   /** Hash of the registered endpoint URL. */
   endpointHash?: string;
+  /** Optional HMAC secret for webhook signature verification. */
+  webhookSecret?: string;
   /** Whether the subscription is currently active. */
   active: boolean;
   /** Optional expiry timestamp (ISO-8601). */

@@ -41,6 +41,9 @@ const createSubscriptionSchema = z.object({
   endpointHash: z
     .string()
     .optional(),
+  webhookSecret: z
+    .string()
+    .optional(),
   expiresAt: z
     .string()
     .datetime()
@@ -96,7 +99,7 @@ router.post('/', requireApiKey, async (req: Request, res: Response) => {
     return;
   }
 
-  const { owner, contractId, topicFilters, channel, endpointHash, expiresAt } = result.data;
+  const { owner, contractId, topicFilters, channel, endpointHash, webhookSecret, expiresAt } = result.data;
 
   const subscription = await upsertSubscription({
     owner,
@@ -104,6 +107,7 @@ router.post('/', requireApiKey, async (req: Request, res: Response) => {
     topicFilters,
     channel,
     endpointHash,
+    webhookSecret,
     expiresAt,
   });
 
