@@ -89,15 +89,27 @@ export async function getActiveByContract(
 
 /**
  * Returns all subscriptions (active or inactive) belonging to a wallet owner.
+ * Optionally filters by active status.
+ * 
+ * @param owner - Wallet address of the subscriber.
+ * @param activeFilter - Optional boolean to filter by active status (true = active only, false = inactive only, undefined = all).
  */
 export async function getByOwner(
   owner: string,
+  activeFilter?: boolean,
   db: Pool = getPool(),
 ): Promise<Subscription[]> {
-  const { rows } = await db.query(
-    `SELECT * FROM subscriptions WHERE owner = $1 ORDER BY created_at DESC`,
-    [owner],
-  );
+  let query = `SELECT * FROM subscriptions WHERE owner = $1`;
+  const params: (string | boolean)[] = [owner];
+
+  if (activeFilter !== undefined) {
+    query += ` AND active = $2`;
+    params.push(activeFilter);
+  }
+
+  query += ` ORDER BY created_at DESC`;
+
+  const { rows } = await db.query(query, params);
   return rows.map(rowToSubscription);
 }
 
