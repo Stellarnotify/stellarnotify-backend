@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { getPool } from './client';
 import { NotificationRecord, NotificationChannel, NotificationStatus, SorobanEvent } from '../types';
+import { recordNotificationCreated, recordNotificationDelivered, recordNotificationFailed } from '../services/metrics';
 
 /** Maps a raw DB row to a NotificationRecord object. */
 function rowToNotification(row: Record<string, unknown>): NotificationRecord {
@@ -31,7 +32,11 @@ export async function createNotification(
      RETURNING *`,
     [data.subscriptionId, JSON.stringify(data.eventPayload), data.channel],
   );
-  return rowToNotification(rows[0]);
+  
+  const notification = rowToNotification(rows[0]);
+  recordNotificationCreated(notification.channel);
+  
+  return notification;
 }
 
 /**
@@ -60,12 +65,19 @@ export async function markDelivered(
   id: string,
   db: Pool = getPool(),
 ): Promise<void> {
+  // First get the channel for metrics
+  const notification = await getNotificationById(id, db);
+  
   await db.query(
     `UPDATE notifications
      SET status = 'Delivered', updated_at = NOW()
      WHERE id = $1`,
     [id],
   );
+  
+  if (notification) {
+    recordNotificationDelivered(notification.channel);
+  }
 }
 
 /**
@@ -76,12 +88,19 @@ export async function markFailed(
   lastError: string,
   db: Pool = getPool(),
 ): Promise<void> {
+  // First get the channel for metrics
+  const notification = await getNotificationById(id, db);
+  
   await db.query(
     `UPDATE notifications
      SET status = 'Failed', last_error = $2, updated_at = NOW()
      WHERE id = $1`,
     [id, lastError],
   );
+  
+  if (notification) {
+    recordNotificationFailed(notification.channel);
+  }
 }
 
 /**
